@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Démo RA · Voir chez moi</title>
+<meta name="description" content="Démo de réalité augmentée : posez un canapé ou un réfrigérateur chez vous, à taille réelle, avant d’acheter.">
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;600&display=swap">
+<style>
+  :root {
+    --bg: #0B0820; --bg2: #1C1250; --text: #F3F0FF; --soft: #BDB6E0;
+    --cyan: #3EE6F5; --violet: #8B6CFF; --pink: #FF7AD9;
+    --glass: rgba(255,255,255,0.06); --line: rgba(190,170,255,0.25);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: Inter, Arial, sans-serif; line-height: 1.5;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%) fixed;
+  }
+  header, main, footer { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  header { padding-top: 32px; }
+  .eyebrow { color: var(--cyan); font-weight: 600; letter-spacing: 3px; text-transform: uppercase; font-size: 13px; margin: 0; }
+  h1 { font-family: Sora, Arial, sans-serif; font-size: clamp(30px, 6vw, 48px); line-height: 1.1; margin: 8px 0 12px; }
+  h1 span { color: var(--cyan); }
+  .intro { color: var(--soft); max-width: 640px; margin: 0; font-size: 17px; }
+
+  .steps { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 8px; padding: 0; list-style: none; }
+  .steps li { background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; font-size: 14px; }
+  .steps b { color: var(--cyan); }
+
+  .desktop-note { display: none; margin: 16px 0 0; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--pink); background: rgba(255,122,217,0.08); font-size: 15px; }
+  .no-ar .desktop-note { display: block; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin: 28px 0 40px; }
+  .card { background: var(--glass); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; box-shadow: 0 24px 60px rgba(4,2,16,0.45); }
+  model-viewer {
+    width: 100%; height: 380px; display: block;
+    background: radial-gradient(circle at 50% 40%, #2A1F6A 0%, #120C33 70%);
+    --poster-color: transparent;
+  }
+  .info { padding: 18px 22px 22px; }
+  .info h2 { font-family: Sora, Arial, sans-serif; font-size: 22px; margin: 0 0 4px; }
+  .dims { color: var(--soft); margin: 0 0 14px; font-size: 15px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .ar-btn {
+    position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+    border: 0; border-radius: 999px; padding: 12px 22px; cursor: pointer;
+    font: 600 16px Inter, Arial, sans-serif; color: #0B0820;
+    background: linear-gradient(135deg, #8EF3FB, #3EE6F5);
+    box-shadow: 0 10px 30px rgba(62,230,245,0.45);
+  }
+  .toggle {
+    border: 1px solid var(--line); background: transparent; color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font: 600 14px Inter, Arial, sans-serif; cursor: pointer;
+  }
+  .toggle[aria-pressed="true"] { border-color: var(--cyan); color: var(--cyan); }
+
+  .hotspot {
+    display: none; border: 0; border-radius: 8px; padding: 4px 8px;
+    background: rgba(11,8,32,0.85); color: var(--cyan); font: 600 13px Inter, Arial, sans-serif;
+    outline: 1px solid var(--cyan); pointer-events: none; white-space: nowrap;
+  }
+  .show-dims .hotspot { display: block; }
+
+  .ar-hint {
+    display: none; position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(11,8,32,0.85); color: var(--text); padding: 8px 14px; border-radius: 999px; font-size: 14px;
+  }
+  model-viewer[ar-status="session-started"] .ar-hint { display: block; }
+
+  footer { color: var(--soft); font-size: 13px; padding-bottom: 32px; }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<header>
+  <p class="eyebrow">Démo de réalité augmentée</p>
+  <h1>Voir chez moi, <span>avant d’acheter</span></h1>
+  <p class="intro">Posez le produit dans votre pièce, à taille réelle, grâce à la caméra de votre téléphone. Vérifiez qu’il rentre et qu’il va avec votre intérieur.</p>
+  <ol class="steps">
+    <li><b>1.</b> Touchez « Voir chez moi »</li>
+    <li><b>2.</b> Visez le sol et bougez doucement le téléphone</li>
+    <li><b>3.</b> Posez, déplacez, tournez autour</li>
+  </ol>
+  <p class="desktop-note">Vous êtes sur un ordinateur&#160;: faites tourner les produits à la souris, puis ouvrez cette page sur votre téléphone pour les voir chez vous.</p>
+</header>
+
+<main class="grid">
+  <article class="card">
+    <model-viewer id="canape" src="canape.glb" alt="Canapé trois places bleu canard en 3D"
+      ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor"
+      camera-controls touch-action="pan-y" auto-rotate rotation-per-second="18deg"
+      camera-orbit="30deg 70deg auto" shadow-intensity="1" exposure="1.05" environment-image="neutral">
+      <button slot="ar-button" class="ar-btn">Voir chez moi</button>
+      <p class="ar-hint">Visez le sol…</p>
+      <div class="hotspot" slot="hotspot-l" data-position="0 0.9 0.46" data-normal="0 0 1">Largeur 2,00 m</div>
+      <div class="hotspot" slot="hotspot-h" data-position="1.0 0.43 0.46" data-normal="1 0 0">Hauteur 0,85 m</div>
+      <div class="hotspot" slot="hotspot-p" data-position="1.0 0.66 0" data-normal="1 0 0">Profondeur 0,90 m</div>
+    </model-viewer>
+    <div class="info">
+      <h2>Canapé 3 places</h2>
+      <p class="dims">L 2,00 m · H 0,85 m · P 0,90 m</p>
+      <div class="row"><button class="toggle" data-target="canape" aria-pressed="false">Afficher les dimensions</button></div>
+    </div>
+  </article>
+
+  <article class="card">
+    <model-viewer id="frigo" src="refrigerateur.glb" alt="Réfrigérateur combiné blanc en 3D"
+      ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor"
+      camera-controls touch-action="pan-y" auto-rotate rotation-per-second="18deg"
+      camera-orbit="30deg 75deg auto" shadow-intensity="1" exposure="1" environment-image="neutral">
+      <button slot="ar-button" class="ar-btn">Voir chez moi</button>
+      <p class="ar-hint">Visez le sol…</p>
+      <div class="hotspot" slot="hotspot-l" data-position="0 1.82 0.33" data-normal="0 1 0">Largeur 0,60 m</div>
+      <div class="hotspot" slot="hotspot-h" data-position="0.31 0.9 0.33" data-normal="1 0 0">Hauteur 1,80 m</div>
+      <div class="hotspot" slot="hotspot-p" data-position="0.31 1.82 0" data-normal="1 0 0">Profondeur 0,65 m</div>
+    </model-viewer>
+    <div class="info">
+      <h2>Réfrigérateur combiné</h2>
+      <p class="dims">L 0,60 m · H 1,80 m · P 0,65 m</p>
+      <div class="row"><button class="toggle" data-target="frigo" aria-pressed="false">Afficher les dimensions</button></div>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <p>Démo pédagogique — exposé « La réalité augmentée ». Modèles 3D simplifiés, dimensions réelles. Fonctionne sur la plupart des iPhone et des téléphones Android récents.</p>
+</footer>
+
+<script>
+  document.querySelectorAll('.toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var mv = document.getElementById(btn.dataset.target);
+      var on = mv.classList.toggle('show-dims');
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? 'Masquer les dimensions' : 'Afficher les dimensions';
+    });
+  });
+  // Sur ordinateur (pas de RA possible), afficher la note d’explication.
+  customElements.whenDefined('model-viewer').then(function () {
+    var mv = document.getElementById('canape');
+    mv.addEventListener('load', function () {
+      if (!mv.canActivateAR) document.body.classList.add('no-ar');
+    }, { once: true });
+  });
+</script>
+</body>
+</html>
