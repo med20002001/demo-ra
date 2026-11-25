@@ -74,7 +74,7 @@
     <span class="pill" id="count">0 colis</span>
     <span class="pill" id="handInfo">✋ Main : non détectée</span>
   </div>
-  <p id="help">Gardez votre <b>index</b> sur un bouton pendant ½ seconde pour l’activer.</p>
+  <p id="help">Touchez un bouton avec votre <b>index</b> : la machine réagit tout de suite.</p>
   <div id="tools">
     <button class="tool" id="flip">↺ Caméra</button>
     <button class="tool" id="mute">🔊 Son</button>
@@ -89,8 +89,8 @@
     <ol>
       <li>Autorisez la caméra.</li>
       <li>Levez la main devant la caméra.</li>
-      <li>Posez votre <b>index</b> sur <b style="color:#3CCB7F">DÉMARRER</b> ½ seconde : la machine démarre.</li>
-      <li>Index sur <b style="color:#FF4F6B">ARRÊTER</b> : elle s’arrête.</li>
+      <li>Touchez <b style="color:#3CCB7F">DÉMARRER</b> avec votre <b>index</b> : la machine démarre tout de suite.</li>
+      <li>Touchez <b style="color:#FF4F6B">ARRÊTER</b> : elle s’arrête.</li>
     </ol>
     <button class="go" id="goFront">📷 Caméra frontale (ordinateur, selfie)</button>
     <button class="go alt" id="goBack">📱 Caméra arrière (téléphone)</button>
@@ -242,7 +242,7 @@ function toScreen(p) {
 }
 const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
 const dwell = new Map([[btnStart, 0], [btnStop, 0]]), latched = new Map([[btnStart, false], [btnStop, false]]);
-const DWELL_MS = 550;
+const DWELL_MS = 120;  // anti-rebond très court : réaction quasi immédiate
 let lastVideoTime = -1, lastNow = performance.now(), hands = [];
 
 function centerOf(el) { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 }; }
@@ -283,7 +283,7 @@ function handStep(now, dt) {
 function frame(now) {
   const dt = Math.min(100, now - lastNow); lastNow = now; const t = now / 1000;
   handStep(now, dt);
-  speed += ((running ? 1 : 0) - speed) * Math.min(1, dt / 900);   // montée / descente en régime
+  speed += ((running ? 1 : 0) - speed) * Math.min(1, dt / 200);   // montée / descente en régime
   if (speed < 0.002) speed = 0;
   gear.rotation.z -= speed * dt * 0.006;
   for (const r of rollers) r.rotation.y -= speed * dt * 0.012;
