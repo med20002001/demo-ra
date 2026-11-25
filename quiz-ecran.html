@@ -184,8 +184,7 @@
       var good = p.answers.filter(function (a) { return a.ok; }).length;
       lines.push([i + 1, p.name, p.score].concat(q, [good + '/3', p.done ? 'oui' : 'non']).map(esc).join(';'));
     });
-    var blob = new Blob(['﻿' + lines.join('
-')], { type: 'text/csv;charset=utf-8' });
+    var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
     a.download = 'resultats-quiz-RA-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.csv';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
