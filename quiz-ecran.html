@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz RA · Écran</title>
+<meta name="description" content="Écran présentateur du quiz RA : QR code, réponses et classement en direct.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;600;700&display=swap">
+<style>
+  :root { --bg:#0B0820; --bg2:#1C1250; --card:rgba(255,255,255,.06); --line:rgba(190,170,255,.28); --text:#F3F0FF; --soft:#BDB6E0; --cyan:#3EE6F5; --violet:#8B6CFF; --pink:#FF7AD9; --green:#3CCB7F; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%) fixed; color: var(--text); font-family: Inter, system-ui, "Segoe UI", Arial, sans-serif; padding: 24px max(16px, env(safe-area-inset-right)) 24px max(16px, env(safe-area-inset-left)); }
+  .wrap { max-width: 1500px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr) minmax(0, 360px); gap: 24px; align-items: start; }
+  @media (max-width: 1100px) { .wrap { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 24px; box-shadow: 0 24px 60px rgba(4,2,16,.45); min-width: 0; }
+  .eyebrow { color: var(--cyan); font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-size: 13px; margin: 0; }
+  h1 { font-family: Sora, Arial, sans-serif; font-size: 34px; line-height: 1.1; margin: 8px 0 16px; text-wrap: balance; }
+  h2 { font-family: Sora, Arial, sans-serif; font-size: 20px; margin: 0 0 14px; line-height: 1.3; text-wrap: balance; }
+  .qr { background: #FBF9FF; border-radius: 20px; padding: 18px; box-shadow: 0 0 70px rgba(62,230,245,.35); }
+  .qr svg, .qr img { display: block; width: 100%; height: auto; }
+  .url { margin-top: 12px; font-weight: 700; color: var(--cyan); word-break: break-all; font-size: 15px; }
+  .stats { display: flex; gap: 12px; margin-top: 18px; }
+  .stat { flex: 1; background: rgba(0,0,0,.25); border-radius: 16px; padding: 14px; text-align: center; }
+  .stat b { display: block; font-family: Sora, Arial, sans-serif; font-size: 40px; color: var(--cyan); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .stat span { font-size: 13px; color: var(--soft); }
+  .qs { display: grid; gap: 18px; }
+  .bars { display: grid; gap: 8px; }
+  .bar { display: grid; grid-template-columns: 30px minmax(0, 1fr) 48px; gap: 10px; align-items: center; font-size: 14px; }
+  .bar .l { font-family: Sora, Arial, sans-serif; font-weight: 800; width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: rgba(139,108,255,.25); }
+  .track { position: relative; height: 34px; border-radius: 10px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, rgba(139,108,255,.55), rgba(139,108,255,.8)); transition: width .6s cubic-bezier(.16,1,.3,1); }
+  .bar.ok .fill { background: linear-gradient(90deg, rgba(60,203,127,.6), rgba(60,203,127,.95)); }
+  .bar.ok .l { background: var(--green); color: #0B0820; }
+  .txt { position: absolute; left: 12px; top: 0; bottom: 0; right: 8px; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+  .n { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rate { font-size: 13px; color: var(--soft); margin-top: 10px; }
+  ol.board { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; counter-reset: r; }
+  ol.board li { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,.05); counter-increment: r; }
+  ol.board li::before { content: counter(r); font-family: Sora, Arial, sans-serif; font-weight: 800; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.1); }
+  ol.board li:nth-child(1)::before { background: #FFC93C; color: #0B0820; }
+  ol.board li:nth-child(2)::before { background: #D6D9E2; color: #0B0820; }
+  ol.board li:nth-child(3)::before { background: #E39A5B; color: #0B0820; }
+  .nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sc { font-family: Sora, Arial, sans-serif; font-weight: 800; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  .empty { color: var(--soft); font-size: 14px; }
+  .net { font-size: 13px; color: var(--soft); margin-top: 14px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #FFB547; margin-right: 6px; }
+  .dot.ok { background: var(--green); }
+  .reset { margin-top: 18px; width: 100%; border: 1px solid var(--line); background: transparent; color: var(--soft); border-radius: 12px; padding: 10px; font: 600 14px Inter, system-ui, sans-serif; cursor: pointer; }
+  .reset.arm { border-color: var(--pink); color: var(--pink); }
+  button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="card">
+    <p class="eyebrow">Quiz en direct</p>
+    <h1>Scannez et jouez&#160;!</h1>
+    <div class="qr" id="qr" aria-label="QR code vers le quiz"></div>
+    <div class="url" id="url"></div>
+    <div class="stats">
+      <div class="stat"><b id="nPlayers">0</b><span>participants</span></div>
+      <div class="stat"><b id="nDone">0</b><span>ont terminé</span></div>
+    </div>
+    <div class="net" id="net"><span class="dot"></span>Connexion…</div>
+    <button class="reset" id="reset" type="button">Nouvelle partie (remettre à zéro)</button>
+  </section>
+
+  <section class="card">
+    <p class="eyebrow">Réponses en direct</p>
+    <div class="qs" id="qs"></div>
+  </section>
+
+  <section class="card">
+    <p class="eyebrow">Classement</p>
+    <h2 style="margin-top:8px">Top 10</h2>
+    <ol class="board" id="board"></ol>
+    <p class="empty" id="noone">En attente des premiers joueurs…</p>
+  </section>
+</div>
+
+<script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
+<script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+(function () {
+  var BROKER = 'wss://broker.hivemq.com:8884/mqtt';
+  var BASE = 'mb-ra-quiz-q9v4';
+  var QS = [
+    { q: 'Différence entre RA et RV ?', o: ['On reste dans le monde réel', 'Uniquement avec un casque', 'Immersion totale', 'Aucune différence'], a: 0 },
+    { q: 'Que veut dire SLAM ?', o: ['Lunettes à affichage mobile', 'Localisation et cartographie simultanées', 'Simulation d’objets 3D', 'Signal laser de mouvement'], a: 1 },
+    { q: 'Quel jeu a popularisé la RA en 2016 ?', o: ['Minecraft', 'Fortnite', 'Pokémon GO', 'Candy Crush'], a: 2 }
+  ];
+  var L = ['A', 'B', 'C', 'D'];
+  var $ = function (id) { return document.getElementById(id); };
+
+  var quizUrl = new URL('quiz.html', location.href).href;
+  $('url').textContent = quizUrl.replace(/^https?:\/\//, '');
+  var qr = qrcode(0, 'M'); qr.addData(quizUrl); qr.make();
+  $('qr').innerHTML = qr.createSvgTag({ cellSize: 8, margin: 2, scalable: true });
+
+  // Questions : structure créée une fois, valeurs mises à jour ensuite
+  var refs = QS.map(function (Q, qi) {
+    var box = document.createElement('div');
+    var h = document.createElement('h2'); h.textContent = (qi + 1) + '. ' + Q.q; box.appendChild(h);
+    var bars = document.createElement('div'); bars.className = 'bars'; box.appendChild(bars);
+    var rows = Q.o.map(function (txt, i) {
+      var row = document.createElement('div'); row.className = 'bar' + (i === Q.a ? ' ok' : '');
+      var l = document.createElement('span'); l.className = 'l'; l.textContent = L[i];
+      var tr = document.createElement('div'); tr.className = 'track';
+      var f = document.createElement('div'); f.className = 'fill';
+      var t = document.createElement('span'); t.className = 'txt'; t.textContent = txt + (i === Q.a ? '  ✓' : '');
+      tr.appendChild(f); tr.appendChild(t);
+      var n = document.createElement('span'); n.className = 'n'; n.textContent = '0';
+      row.appendChild(l); row.appendChild(tr); row.appendChild(n); bars.appendChild(row);
+      return { f: f, n: n };
+    });
+    var rate = document.createElement('p'); rate.className = 'rate'; rate.textContent = 'Aucune réponse pour l’instant'; box.appendChild(rate);
+    $('qs').appendChild(box);
+    return { rows: rows, rate: rate };
+  });
+
+  var epoch = null, players = {};
+  var client = mqtt.connect(BROKER, { clientId: 'raq_screen_' + Math.random().toString(16).slice(2, 10), reconnectPeriod: 2000, connectTimeout: 10000, clean: true });
+  client.on('connect', function () {
+    $('net').innerHTML = '<span class="dot ok"></span>En ligne : les réponses arrivent en direct';
+    client.subscribe(BASE + '/ctl');
+    setTimeout(function () { if (epoch === null) setEpoch('0'); }, 2500);
+  });
+  client.on('reconnect', function () { $('net').innerHTML = '<span class="dot"></span>Reconnexion…'; });
+  client.on('message', function (topic, buf) {
+    var msg; try { msg = JSON.parse(buf.toString()); } catch (e) { return; }
+    if (topic === BASE + '/ctl') { if (msg && msg.epoch != null) setEpoch(String(msg.epoch)); return; }
+    var pre = BASE + '/p/' + epoch + '/';
+    if (topic.indexOf(pre) === 0 && msg && typeof msg === 'object') { players[topic.slice(pre.length)] = clean(msg); render(); }
+  });
+
+  function clean(m) {
+    var ans = Array.isArray(m.answers) ? m.answers.slice(0, 3).map(function (a) {
+      return { c: Number.isInteger(a && a.c) ? a.c : -1, ok: !!(a && a.ok), pts: Math.max(0, Math.min(1000, Number(a && a.pts) || 0)) };
+    }) : [];
+    return { name: String(m.name || 'Anonyme').slice(0, 16), answers: ans, score: ans.reduce(function (s, a) { return s + (a.ok ? a.pts : 0); }, 0), done: !!m.done && ans.length === 3 };
+  }
+  function setEpoch(ep) {
+    if (ep === epoch) return;
+    if (epoch !== null) client.unsubscribe(BASE + '/p/' + epoch + '/+');
+    epoch = ep; players = {}; render();
+    client.subscribe(BASE + '/p/' + epoch + '/+');
+  }
+
+  function render() {
+    var list = Object.keys(players).map(function (k) { return players[k]; });
+    $('nPlayers').textContent = list.length;
+    $('nDone').textContent = list.filter(function (p) { return p.done; }).length;
+    QS.forEach(function (Q, qi) {
+      var counts = [0, 0, 0, 0], total = 0, good = 0;
+      list.forEach(function (p) { var a = p.answers[qi]; if (!a) return; total++; if (a.c >= 0 && a.c < 4) counts[a.c]++; if (a.c === Q.a) good++; });
+      var max = Math.max(1, total);
+      refs[qi].rows.forEach(function (r, i) { r.f.style.width = (100 * counts[i] / max) + '%'; r.n.textContent = counts[i]; });
+      refs[qi].rate.textContent = total ? (good + ' bonne(s) réponse(s) sur ' + total + ' · ' + Math.round(100 * good / total) + ' %') : 'Aucune réponse pour l’instant';
+    });
+    var top = list.slice().sort(function (a, b) { return b.score - a.score; }).slice(0, 10);
+    var ol = $('board'); ol.textContent = '';
+    top.forEach(function (p) {
+      var li = document.createElement('li');
+      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = p.name + (p.done ? '' : ' …');
+      var sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = p.score;
+      li.appendChild(nm); li.appendChild(sc); ol.appendChild(li);
+    });
+    $('noone').hidden = top.length > 0;
+  }
+
+  var armed = false, armTimer = null;
+  $('reset').addEventListener('click', function () {
+    if (!armed) { armed = true; this.classList.add('arm'); this.textContent = 'Confirmer : effacer les résultats affichés ?'; armTimer = setTimeout(disarm, 4000); return; }
+    disarm();
+    client.publish(BASE + '/ctl', JSON.stringify({ epoch: Date.now() }), { retain: true, qos: 1 });
+  });
+  function disarm() { armed = false; clearTimeout(armTimer); $('reset').classList.remove('arm'); $('reset').textContent = 'Nouvelle partie (remettre à zéro)'; }
+  render();
+})();
+</script>
+</body>
+</html>

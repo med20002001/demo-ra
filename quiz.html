@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz RA</title>
+<meta name="description" content="Quiz en direct de 3 questions sur la réalité augmentée, à la fin de l’exposé.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;600;700&display=swap">
+<style>
+  :root { --bg:#0B0820; --bg2:#1C1250; --card:rgba(255,255,255,.06); --line:rgba(190,170,255,.28); --text:#F3F0FF; --soft:#BDB6E0; --cyan:#3EE6F5; --violet:#8B6CFF; --green:#3CCB7F; --red:#FF4F6B; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 100%) fixed; color: var(--text); font-family: Inter, system-ui, "Segoe UI", Arial, sans-serif; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+  main { max-width: 560px; margin: 0 auto; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; font-size: 13px; color: var(--soft); }
+  .brand { color: var(--cyan); font-weight: 700; letter-spacing: 3px; text-transform: uppercase; font-size: 12px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #FFB547; margin-right: 6px; vertical-align: middle; }
+  .dot.ok { background: var(--green); }
+  h1 { font-family: Sora, Arial, sans-serif; font-size: clamp(26px, 7vw, 34px); line-height: 1.15; margin: 4px 0 10px; text-wrap: balance; }
+  h2 { font-family: Sora, Arial, sans-serif; font-size: clamp(21px, 5.6vw, 27px); line-height: 1.25; margin: 10px 0 18px; text-wrap: balance; }
+  p { line-height: 1.5; }
+  .soft { color: var(--soft); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 22px; box-shadow: 0 20px 50px rgba(4,2,16,.45); }
+  label { display: block; font-weight: 600; margin: 18px 0 8px; }
+  input { width: 100%; font: 600 18px Inter, system-ui, sans-serif; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: rgba(0,0,0,.25); color: var(--text); }
+  input:focus-visible, button:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
+  .go { width: 100%; margin-top: 16px; border: 0; border-radius: 14px; padding: 15px; font: 700 17px Inter, system-ui, sans-serif; color: #0B0820; background: linear-gradient(135deg, #8EF3FB, #3EE6F5); cursor: pointer; }
+  .go:disabled { opacity: .45; cursor: default; }
+  .meta { display: flex; justify-content: space-between; font-size: 14px; color: var(--soft); font-weight: 600; }
+  .timer { height: 8px; border-radius: 8px; background: rgba(255,255,255,.1); overflow: hidden; margin: 10px 0 4px; }
+  .timer i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--violet), var(--cyan)); transform-origin: left; }
+  .opts { display: grid; gap: 10px; }
+  .opt { display: flex; gap: 12px; align-items: center; text-align: left; width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255,255,255,.05); color: var(--text); font: 600 16px/1.35 Inter, system-ui, sans-serif; cursor: pointer; transition: transform .1s ease, background .2s ease; }
+  .opt:active { transform: scale(.98); }
+  .opt .l { flex: none; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: Sora, Arial, sans-serif; font-weight: 800; background: rgba(139,108,255,.25); color: #D9CEFF; }
+  .opt[disabled] { cursor: default; }
+  .opt.good { background: rgba(60,203,127,.18); border-color: var(--green); }
+  .opt.good .l { background: var(--green); color: #0B0820; }
+  .opt.bad { background: rgba(255,79,107,.16); border-color: var(--red); }
+  .opt.bad .l { background: var(--red); color: #0B0820; }
+  .opt.dim { opacity: .5; }
+  .fb { margin-top: 16px; padding: 14px 16px; border-radius: 14px; background: rgba(0,0,0,.25); border-left: 4px solid var(--cyan); }
+  .fb b { display: block; font-size: 18px; margin-bottom: 4px; }
+  .big { font-family: Sora, Arial, sans-serif; font-size: 56px; font-weight: 800; color: var(--cyan); line-height: 1; margin: 8px 0; font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .pill { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+  .recap { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
+  .recap li { padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.05); font-size: 14px; line-height: 1.4; }
+  @media (prefers-reduced-motion: reduce) { .timer i { transition: none !important; } .opt { transition: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><span class="brand">Quiz · Réalité augmentée</span><span id="net"><span class="dot"></span>Connexion…</span></div>
+
+  <section id="vStart" class="card">
+    <h1>3 questions sur la réalité augmentée</h1>
+    <p class="soft">Répondez le plus vite possible : une bonne réponse rapide rapporte plus de points. Les résultats s’affichent en direct sur le grand écran.</p>
+    <label for="pseudo">Votre prénom ou pseudo</label>
+    <input id="pseudo" maxlength="16" autocomplete="nickname" placeholder="Ex. : Yasmine">
+    <button class="go" id="btnGo" disabled>Commencer le quiz</button>
+  </section>
+
+  <section id="vQ" class="card" hidden>
+    <div class="meta"><span id="qNum">Question 1/3</span><span id="qTime">20 s</span></div>
+    <div class="timer"><i id="bar"></i></div>
+    <h2 id="qText"></h2>
+    <div class="opts" id="opts"></div>
+    <div class="fb" id="fb" hidden><b id="fbTitle"></b><span id="fbText"></span></div>
+    <button class="go" id="btnNext" hidden>Question suivante</button>
+  </section>
+
+  <section id="vEnd" class="card" hidden>
+    <p class="brand" style="margin:0">Terminé</p>
+    <h1 id="endTitle">Bravo !</h1>
+    <div class="big" id="endScore">0</div>
+    <p class="soft" style="margin:0">points</p>
+    <div class="row"><span class="pill" id="endGood"></span><span class="pill" id="endRank">Classement…</span></div>
+    <ul class="recap" id="recap"></ul>
+    <p class="soft" style="font-size:13px;margin-top:16px">Regardez le grand écran pour le classement final.</p>
+  </section>
+</main>
+
+<script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
+<script>
+(function () {
+  var BROKER = 'wss://broker.hivemq.com:8884/mqtt';
+  var BASE = 'mb-ra-quiz-q9v4';
+  var QS = [
+    { q: 'Quelle est la différence entre la réalité augmentée (RA) et la réalité virtuelle (RV) ?',
+      o: ['En RA, on reste dans le monde réel, enrichi d’éléments virtuels', 'La RA fonctionne uniquement avec un casque', 'En RA, on est totalement immergé dans un monde virtuel', 'Il n’y a aucune différence'],
+      a: 0, e: 'La RA ajoute du virtuel au monde réel ; la RV vous en coupe complètement.' },
+    { q: 'Que veut dire SLAM ?',
+      o: ['Système de lunettes à affichage mobile', 'Localisation et cartographie simultanées', 'Simulation logicielle d’objets 3D', 'Signal laser d’analyse de mouvement'],
+      a: 1, e: 'SLAM = Simultaneous Localization And Mapping : l’appareil se repère tout en cartographiant l’espace.' },
+    { q: 'Quel jeu a popularisé la réalité augmentée en 2016 ?',
+      o: ['Minecraft', 'Fortnite', 'Pokémon GO', 'Candy Crush'],
+      a: 2, e: 'Pokémon GO a fait découvrir la RA à des millions de joueurs dans le monde.' }
+  ];
+  var LIMIT = 20000, L = ['A', 'B', 'C', 'D'];
+  var $ = function (id) { return document.getElementById(id); };
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+  var pid = store('raq_pid');
+  if (!pid) { pid = 'p' + Math.random().toString(36).slice(2, 10); store('raq_pid', pid); }
+  var epoch = null, me = null, idx = 0, tStart = 0, tick = null, players = {};
+
+  var client = mqtt.connect(BROKER, { clientId: 'raq_' + pid + '_' + Math.random().toString(16).slice(2, 6), reconnectPeriod: 2000, connectTimeout: 10000, clean: true });
+  client.on('connect', function () {
+    $('net').innerHTML = '<span class="dot ok"></span>En ligne';
+    client.subscribe(BASE + '/ctl');
+    setTimeout(function () { if (epoch === null) setEpoch('0'); }, 2500);
+  });
+  client.on('reconnect', function () { $('net').innerHTML = '<span class="dot"></span>Reconnexion…'; });
+  client.on('message', function (topic, buf) {
+    var msg; try { msg = JSON.parse(buf.toString()); } catch (e) { return; }
+    if (topic === BASE + '/ctl') { if (msg && msg.epoch != null) setEpoch(String(msg.epoch)); return; }
+    var pre = BASE + '/p/' + epoch + '/';
+    if (topic.indexOf(pre) === 0 && msg && typeof msg === 'object') { players[topic.slice(pre.length)] = msg; showRank(); }
+  });
+
+  function setEpoch(ep) {
+    if (ep === epoch) return;
+    if (epoch !== null) client.unsubscribe(BASE + '/p/' + epoch + '/+');
+    epoch = ep; players = {};
+    client.subscribe(BASE + '/p/' + epoch + '/+');
+    var saved = null; try { saved = JSON.parse(store('raq_state') || 'null'); } catch (e) {}
+    if (saved && saved.epoch === epoch) { me = saved; idx = me.answers.length; if (me.done) return showEnd(); }
+    else { me = null; show('vStart'); }
+    $('btnGo').disabled = !$('pseudo').value.trim();
+  }
+
+  function show(v) { ['vStart', 'vQ', 'vEnd'].forEach(function (k) { $(k).hidden = k !== v; }); }
+  function publish() {
+    store('raq_state', JSON.stringify(me));
+    if (epoch !== null) client.publish(BASE + '/p/' + epoch + '/' + pid, JSON.stringify(me), { retain: true, qos: 1 });
+  }
+
+  $('pseudo').addEventListener('input', function () { $('btnGo').disabled = !this.value.trim() || epoch === null; });
+  try { $('pseudo').value = store('raq_name') || ''; } catch (e) {}
+  $('btnGo').addEventListener('click', function () {
+    var name = $('pseudo').value.trim().slice(0, 16); if (!name) return;
+    store('raq_name', name);
+    me = { name: name, epoch: epoch, answers: [], score: 0, done: false, t: Date.now() };
+    idx = 0; publish(); ask();
+  });
+
+  function ask() {
+    var Q = QS[idx]; show('vQ');
+    $('qNum').textContent = 'Question ' + (idx + 1) + '/' + QS.length;
+    $('qText').textContent = Q.q;
+    $('fb').hidden = true; $('btnNext').hidden = true;
+    var box = $('opts'); box.textContent = '';
+    Q.o.forEach(function (txt, i) {
+      var b = document.createElement('button'); b.className = 'opt'; b.type = 'button';
+      var l = document.createElement('span'); l.className = 'l'; l.textContent = L[i];
+      var s = document.createElement('span'); s.textContent = txt;
+      b.appendChild(l); b.appendChild(s);
+      b.addEventListener('click', function () { answer(i); });
+      box.appendChild(b);
+    });
+    tStart = performance.now();
+    clearInterval(tick);
+    tick = setInterval(function () {
+      var left = Math.max(0, LIMIT - (performance.now() - tStart));
+      $('bar').style.transform = 'scaleX(' + (left / LIMIT) + ')';
+      $('qTime').textContent = Math.ceil(left / 1000) + ' s';
+      if (left <= 0) answer(-1);
+    }, 100);
+  }
+
+  function answer(c) {
+    if (!me || me.answers.length > idx) return;
+    clearInterval(tick);
+    var Q = QS[idx], ms = Math.round(Math.min(LIMIT, performance.now() - tStart)), ok = c === Q.a;
+    var pts = ok ? 500 + Math.round(500 * (1 - ms / LIMIT)) : 0;
+    me.answers.push({ c: c, ok: ok, ms: ms, pts: pts }); me.score += pts; me.t = Date.now();
+    var btns = $('opts').children;
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].disabled = true;
+      if (i === Q.a) btns[i].classList.add('good'); else if (i === c) btns[i].classList.add('bad'); else btns[i].classList.add('dim');
+    }
+    $('fbTitle').textContent = ok ? '✅ Bonne réponse ! +' + pts + ' points' : (c < 0 ? '⏱️ Temps écoulé' : '❌ Mauvaise réponse');
+    $('fbText').textContent = Q.e;
+    $('fb').hidden = false;
+    if (idx === QS.length - 1) { me.done = true; $('btnNext').textContent = 'Voir mon score'; } else { $('btnNext').textContent = 'Question suivante'; }
+    publish();
+    $('btnNext').hidden = false;
+  }
+  $('btnNext').addEventListener('click', function () { idx++; if (idx < QS.length) ask(); else showEnd(); });
+
+  function showEnd() {
+    show('vEnd');
+    var good = me.answers.filter(function (a) { return a.ok; }).length;
+    $('endTitle').textContent = good === 3 ? 'Parfait, ' + me.name + ' !' : good >= 2 ? 'Bravo, ' + me.name + ' !' : 'Merci, ' + me.name + ' !';
+    $('endScore').textContent = me.score;
+    $('endGood').textContent = good + '/3 bonnes réponses';
+    var r = $('recap'); r.textContent = '';
+    me.answers.forEach(function (a, i) {
+      var li = document.createElement('li');
+      li.textContent = (a.ok ? '✅ ' : '❌ ') + QS[i].q + ' → ' + QS[i].o[QS[i].a];
+      r.appendChild(li);
+    });
+    showRank();
+  }
+  function showRank() {
+    if (!me || !me.done || $('vEnd').hidden) return;
+    var list = Object.keys(players).map(function (k) { return players[k]; }).filter(function (p) { return p && typeof p.score === 'number'; });
+    if (!players[pid]) list.push(me);
+    list.sort(function (a, b) { return b.score - a.score; });
+    var rank = 1 + list.filter(function (p) { return p.score > me.score; }).length;
+    $('endRank').textContent = rank + (rank === 1 ? 'er' : 'e') + ' sur ' + list.length + ' participant' + (list.length > 1 ? 's' : '');
+  }
+})();
+</script>
+</body>
+</html>
