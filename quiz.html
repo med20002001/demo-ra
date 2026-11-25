@@ -47,6 +47,9 @@
   .pill { padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid var(--line); font-weight: 600; font-size: 14px; }
   .recap { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
   .recap li { padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.05); font-size: 14px; line-height: 1.4; }
+  model-viewer { display: block; width: 100%; height: 300px; margin: 4px 0 12px; border-radius: 18px; background: radial-gradient(circle at 50% 40%, #2A1F6A 0%, #120C33 75%); --poster-color: transparent; }
+  .arbtn { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); border: 0; border-radius: 999px; padding: 11px 18px; font: 700 15px Inter, system-ui, sans-serif; color: #0B0820; background: linear-gradient(135deg, #FF9BE4, #FF7AD9); box-shadow: 0 8px 24px rgba(255,122,217,.45); cursor: pointer; white-space: nowrap; }
+  .tag { padding: 3px 10px; border-radius: 999px; background: rgba(255,122,217,.18); color: #FF9BE4; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
   @media (prefers-reduced-motion: reduce) { .timer i { transition: none !important; } .opt { transition: none; } }
 </style>
 </head>
@@ -55,11 +58,23 @@
   <div class="top"><span class="brand">Quiz · Réalité augmentée</span><span id="net"><span class="dot"></span>Connexion…</span></div>
 
   <section id="vStart" class="card">
-    <h1>3 questions sur la réalité augmentée</h1>
-    <p class="soft">Répondez le plus vite possible : une bonne réponse rapide rapporte plus de points. Les résultats s’affichent en direct sur le grand écran.</p>
+    <h1>Quiz RA : 3 questions, 3 objets en réalité augmentée</h1>
+    <p class="soft">Avant chaque question, un objet 3D apparaît : touchez « Voir en RA » pour le poser dans la salle, puis répondez le plus vite possible. Les résultats s’affichent en direct sur le grand écran.</p>
     <label for="pseudo">Votre prénom ou pseudo</label>
     <input id="pseudo" maxlength="16" autocomplete="nickname" placeholder="Ex. : Yasmine">
     <button class="go" id="btnGo" disabled>Commencer le quiz</button>
+  </section>
+
+  <section id="vAR" class="card" hidden>
+    <div class="meta"><span id="arNum">Question 1/3</span><span class="tag">Étape RA</span></div>
+    <h2 id="arTitle"></h2>
+    <model-viewer id="mv" alt="Objet 3D de la question" ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" ar-placement="floor"
+      camera-controls touch-action="pan-y" auto-rotate rotation-per-second="20deg" shadow-intensity="1" environment-image="neutral" exposure="1.05">
+      <button slot="ar-button" class="arbtn" type="button">📱 Voir en RA dans la salle</button>
+    </model-viewer>
+    <p class="soft" id="arHint"></p>
+    <p class="soft" id="arPc" style="font-size:13px" hidden>Sur ordinateur : faites tourner l’objet avec la souris. La RA s’ouvre sur téléphone.</p>
+    <button class="go" id="btnAsk" type="button">Je réponds à la question →</button>
   </section>
 
   <section id="vQ" class="card" hidden>
@@ -82,6 +97,7 @@
   </section>
 </main>
 
+<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
 <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
 <script>
 (function () {
@@ -90,13 +106,16 @@
   var QS = [
     { q: 'Quelle est la différence entre la réalité augmentée (RA) et la réalité virtuelle (RV) ?',
       o: ['En RA, on reste dans le monde réel, enrichi d’éléments virtuels', 'La RA fonctionne uniquement avec un casque', 'En RA, on est totalement immergé dans un monde virtuel', 'Il n’y a aucune différence'],
-      a: 0, e: 'La RA ajoute du virtuel au monde réel ; la RV vous en coupe complètement.' },
+      a: 0, e: 'La RA ajoute du virtuel au monde réel ; la RV vous en coupe complètement.',
+      m: 'canape.glb', t: 'Posez ce canapé virtuel dans la salle', h: 'Vous voyez toujours la vraie salle, avec un objet virtuel en plus. Indice pour la question !' },
     { q: 'Que veut dire SLAM ?',
       o: ['Système de lunettes à affichage mobile', 'Localisation et cartographie simultanées', 'Simulation logicielle d’objets 3D', 'Signal laser d’analyse de mouvement'],
-      a: 1, e: 'SLAM = Simultaneous Localization And Mapping : l’appareil se repère tout en cartographiant l’espace.' },
+      a: 1, e: 'SLAM = Simultaneous Localization And Mapping : l’appareil se repère tout en cartographiant l’espace.',
+      m: 'refrigerateur.glb', t: 'Posez ce réfrigérateur au sol', h: 'Bougez doucement le téléphone : il repère le sol et calcule sa propre position en même temps. C’est le sujet de la question !' },
     { q: 'Quel jeu a popularisé la réalité augmentée en 2016 ?',
       o: ['Minecraft', 'Fortnite', 'Pokémon GO', 'Candy Crush'],
-      a: 2, e: 'Pokémon GO a fait découvrir la RA à des millions de joueurs dans le monde.' }
+      a: 2, e: 'Pokémon GO a fait découvrir la RA à des millions de joueurs dans le monde.',
+      m: 'robot.glb', t: 'Faites apparaître la créature virtuelle', h: 'Une petite créature virtuelle dans la vraie salle, comme dans le jeu de la question…' }
   ];
   var LIMIT = 20000, L = ['A', 'B', 'C', 'D'];
   var $ = function (id) { return document.getElementById(id); };
@@ -131,7 +150,19 @@
     $('btnGo').disabled = !$('pseudo').value.trim();
   }
 
-  function show(v) { ['vStart', 'vQ', 'vEnd'].forEach(function (k) { $(k).hidden = k !== v; }); }
+  function show(v) { ['vStart', 'vAR', 'vQ', 'vEnd'].forEach(function (k) { $(k).hidden = k !== v; }); window.scrollTo(0, 0); }
+
+  // Étape RA avant chaque question : un objet 3D à poser dans la salle
+  function arStep() {
+    var Q = QS[idx], mv = $('mv');
+    $('arNum').textContent = 'Question ' + (idx + 1) + '/' + QS.length;
+    $('arTitle').textContent = Q.t;
+    $('arHint').textContent = Q.h;
+    mv.setAttribute('src', Q.m);
+    show('vAR');
+  }
+  $('mv').addEventListener('load', function () { $('arPc').hidden = !!this.canActivateAR; });
+  $('btnAsk').addEventListener('click', function () { ask(); });
   function publish() {
     store('raq_state', JSON.stringify(me));
     if (epoch !== null) client.publish(BASE + '/p/' + epoch + '/' + pid, JSON.stringify(me), { retain: true, qos: 1 });
@@ -143,7 +174,7 @@
     var name = $('pseudo').value.trim().slice(0, 16); if (!name) return;
     store('raq_name', name);
     me = { name: name, epoch: epoch, answers: [], score: 0, done: false, t: Date.now() };
-    idx = 0; publish(); ask();
+    idx = 0; publish(); arStep();
   });
 
   function ask() {
@@ -188,7 +219,7 @@
     publish();
     $('btnNext').hidden = false;
   }
-  $('btnNext').addEventListener('click', function () { idx++; if (idx < QS.length) ask(); else showEnd(); });
+  $('btnNext').addEventListener('click', function () { idx++; if (idx < QS.length) arStep(); else showEnd(); });
 
   function showEnd() {
     show('vEnd');
