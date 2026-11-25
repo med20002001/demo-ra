@@ -36,6 +36,7 @@
   #state.stop { color: var(--red); border-color: var(--red); }
   #state.ramp { color: #FFB547; border-color: #FFB547; }
   #handInfo.on { color: var(--cyan); border-color: var(--cyan); }
+  #size.on { color: #FF7AD9; border-color: #FF7AD9; }
 
   #tools { position: absolute; bottom: max(14px, env(safe-area-inset-bottom)); right: 14px; z-index: 4; display: flex; gap: 8px; }
   .tool { background: rgba(11,8,32,.78); color: var(--text); border: 1px solid rgba(190,170,255,.35); border-radius: 12px; padding: 9px 13px; font: 600 14px system-ui, Arial, sans-serif; cursor: pointer; }
@@ -73,9 +74,12 @@
     <span class="pill" id="rpm">0 tr/min</span>
     <span class="pill" id="count">0 colis</span>
     <span class="pill" id="handInfo">✋ Main : non détectée</span>
+    <span class="pill" id="size">Taille ×1,0</span>
   </div>
-  <p id="help">Touchez un bouton avec votre <b>index</b> : la machine réagit tout de suite.</p>
+  <p id="help">Touchez un bouton avec votre <b>index</b> : la machine réagit tout de suite.<br>Taille : <b>pincez avec les deux mains</b> puis écartez-les (ou + / −, deux doigts, molette).</p>
   <div id="tools">
+    <button class="tool" id="zoomOut" aria-label="Réduire la machine">−</button>
+    <button class="tool" id="zoomIn" aria-label="Agrandir la machine">+</button>
     <button class="tool" id="flip">↺ Caméra</button>
     <button class="tool" id="mute">🔊 Son</button>
   </div>
@@ -193,6 +197,27 @@ function beep(f, d = 0.15) {
   o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
 }
 
+/* ---------- Taille de la machine (redimensionnement) ---------- */
+const SMIN = 0.35, SMAX = 2.6;
+let scaleTarget = 1, scaleNow = 1, handZoom = null, touchZoom = null;
+const clampS = (v) => Math.max(SMIN, Math.min(SMAX, v));
+function zoomBy(f) { scaleTarget = clampS(scaleTarget * f); }
+$('zoomIn').onclick = () => zoomBy(1.2);
+$('zoomOut').onclick = () => zoomBy(1 / 1.2);
+addEventListener('wheel', (e) => { e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.08 : 1 / 1.08); }, { passive: false });
+const touches = new Map();
+addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') touches.set(e.pointerId, { x: e.clientX, y: e.clientY }); });
+addEventListener('pointermove', (e) => {
+  if (!touches.has(e.pointerId)) return;
+  touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (touches.size === 2) {
+    const [a, b] = [...touches.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (!touchZoom) touchZoom = { d, s: scaleTarget }; else scaleTarget = clampS(touchZoom.s * d / touchZoom.d);
+  }
+});
+const endTouch = (e) => { touches.delete(e.pointerId); if (touches.size < 2) touchZoom = null; };
+addEventListener('pointerup', endTouch); addEventListener('pointercancel', endTouch);
+
 /* ---------- État de la machine ---------- */
 let running = false, speed = 0, produced = 0;
 function setRunning(on) {
@@ -263,6 +288,20 @@ function handStep(now, dt) {
     hctx.strokeStyle = '#FF7AD9'; hctx.lineWidth = 4; hctx.beginPath(); hctx.arc(tip.x, tip.y, 16, 0, 7); hctx.stroke();
     hctx.fillStyle = 'rgba(255,122,217,.35)'; hctx.fill();
   }
+  // Pincement = bout du pouce (4) proche du bout de l’index (8), relatif à la taille de la main (0 → 9)
+  const pinches = [];
+  for (const pts of hands) {
+    const size = Math.hypot(pts[0].x - pts[9].x, pts[0].y - pts[9].y) || 1;
+    if (Math.hypot(pts[4].x - pts[8].x, pts[4].y - pts[8].y) < size * 0.38) pinches.push({ x: (pts[4].x + pts[8].x) / 2, y: (pts[4].y + pts[8].y) / 2 });
+  }
+  if (pinches.length === 2) {
+    const d = Math.hypot(pinches[0].x - pinches[1].x, pinches[0].y - pinches[1].y);
+    if (!handZoom) handZoom = { d, s: scaleTarget }; else scaleTarget = clampS(handZoom.s * d / handZoom.d);
+    hctx.strokeStyle = '#FF7AD9'; hctx.lineWidth = 4; hctx.setLineDash([10, 8]);
+    hctx.beginPath(); hctx.moveTo(pinches[0].x, pinches[0].y); hctx.lineTo(pinches[1].x, pinches[1].y); hctx.stroke(); hctx.setLineDash([]);
+  } else handZoom = null;
+  $('size').classList.toggle('on', !!handZoom || !!touchZoom);
+
   const hi = $('handInfo');
   hi.textContent = tips.length ? `✋ Main détectée (${tips.length})` : '✋ Main : non détectée';
   hi.classList.toggle('on', tips.length > 0);
@@ -288,6 +327,9 @@ function frame(now) {
   gear.rotation.z -= speed * dt * 0.006;
   for (const r of rollers) r.rotation.y -= speed * dt * 0.012;
   for (const c of crates) { c.position.x += speed * dt * 0.0009; if (c.position.x > 1.25) { c.position.x = -1.25; produced += 1; } }
+  scaleNow += (scaleTarget - scaleNow) * Math.min(1, dt / 120);
+  machine.scale.setScalar(scaleNow);
+  $('size').textContent = 'Taille ×' + scaleNow.toFixed(1).replace('.', ',');
   machine.rotation.y = -0.38 + Math.sin(t * 0.35) * 0.07;
   base.position.y = 0.25 + Math.sin(t * 70) * 0.004 * speed;
   const ramp = running ? speed < 0.95 : speed > 0.02;
